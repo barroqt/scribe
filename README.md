@@ -1,6 +1,6 @@
 # 7 Wonders Game Tracker
 
-Live: scribe-pi-murex.vercel.app
+Live: scribe-7wonders.vercel.app
 
 ## Description
 
