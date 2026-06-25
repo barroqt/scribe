@@ -1,15 +1,32 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { games, gameParticipants, players, WONDERS } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { PlayerStats, WonderStats, WonderPlayerStats } from "@/db/schema";
 
 export async function GET() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // Fetch all data needed for stats calculation
-    const allPlayers = await db.select().from(players).orderBy(players.name);
-    const allGames = await db.select().from(games);
-    const allParticipants = await db.select().from(gameParticipants);
+    // Fetch all data needed for stats calculation, scoped to user
+    const allPlayers = await db
+      .select()
+      .from(players)
+      .where(eq(players.userId, userId))
+      .orderBy(players.name);
+    const allParticipants = await db
+      .select()
+      .from(gameParticipants)
+      .where(eq(gameParticipants.userId, userId));
+    const allGames = await db
+      .select()
+      .from(games)
+      .where(eq(games.userId, userId));
 
     // Calculate player stats
     const playerStats: PlayerStats[] = allPlayers.map((player) => {

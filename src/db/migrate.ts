@@ -1,4 +1,13 @@
-import { runMigrations } from "@kilocode/app-builder-db";
+import { migrate } from "drizzle-orm/sqlite-proxy/migrator";
 import { db } from "./index";
+import type { ProxyMigrator } from "drizzle-orm/sqlite-proxy/migrator";
 
-await runMigrations(db, {}, { migrationsFolder: "./src/db/migrations" });
+const runMigration: ProxyMigrator = async (queries) => {
+  for (const sql of queries) {
+    await db.run(sql);
+  }
+};
+
+await migrate(db, runMigration, {
+  migrationsFolder: "./src/db/migrations",
+});

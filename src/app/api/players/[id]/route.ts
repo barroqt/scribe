@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { players } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
     const playerId = parseInt(id, 10);
@@ -18,7 +25,7 @@ export async function DELETE(
     const existing = await db
       .select()
       .from(players)
-      .where(eq(players.id, playerId));
+      .where(and(eq(players.id, playerId), eq(players.userId, userId)));
 
     if (existing.length === 0) {
       return NextResponse.json({ error: "Player not found" }, { status: 404 });

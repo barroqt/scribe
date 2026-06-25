@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { players, games } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-async function getHomeStats() {
+async function getHomeStats(userId: string) {
   const [allPlayers, allGames] = await Promise.all([
-    db.select().from(players),
-    db.select().from(games),
+    db.select().from(players).where(eq(players.userId, userId)),
+    db.select().from(games).where(eq(games.userId, userId)),
   ]);
   return {
     totalPlayers: allPlayers.length,
@@ -14,7 +16,8 @@ async function getHomeStats() {
 }
 
 export default async function HomePage() {
-  const stats = await getHomeStats();
+  const session = await auth();
+  const stats = await getHomeStats(session?.user?.id!);
 
   return (
     <div className="flex flex-col items-center gap-10">

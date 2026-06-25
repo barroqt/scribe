@@ -1,16 +1,26 @@
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { players, gameParticipants } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import PlayersClient from "./PlayersClient";
 
-async function getPlayersWithGameCount() {
-  const allPlayers = await db.select().from(players).orderBy(players.name);
+async function getPlayersWithGameCount(userId: string) {
+  const allPlayers = await db
+    .select()
+    .from(players)
+    .where(eq(players.userId, userId))
+    .orderBy(players.name);
   const playersWithCount = await Promise.all(
     allPlayers.map(async (player) => {
       const participations = await db
         .select()
         .from(gameParticipants)
-        .where(eq(gameParticipants.playerId, player.id));
+        .where(
+          and(
+            eq(gameParticipants.playerId, player.id),
+            eq(gameParticipants.userId, userId)
+          )
+        );
       const wins = participations.filter((p) => p.rank === 1).length;
       return {
         ...player,
@@ -23,6 +33,7 @@ async function getPlayersWithGameCount() {
 }
 
 export default async function PlayersPage() {
-  const players = await getPlayersWithGameCount();
-  return <PlayersClient initialPlayers={players} />;
+  const session = await auth();
+  const data = await getPlayersWithGameCount(session?.user?.id!);
+  return <PlayersClient initialPlayers={data} />;
 }

@@ -15,6 +15,13 @@
       "when": 1776374386772,
       "tag": "0001_rich_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1782393302272,
+      "tag": "0002_mixed_alex_wilder",
+      "breakpoints": true
     }
   ]
 }

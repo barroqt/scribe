@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -13,6 +14,7 @@ const navItems = [
 
 export default function NavBar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   return (
     <header
@@ -55,18 +57,46 @@ export default function NavBar() {
           </div>
         </Link>
 
-        {/* Nav links */}
-        <nav className="flex items-center gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`nav-link ${pathname === item.href ? "active" : ""}`}
-            >
-              {item.label}
+        <div className="flex items-center gap-3">
+          {/* Nav links */}
+          <nav className="flex items-center gap-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-link ${pathname === item.href ? "active" : ""}`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Auth */}
+          {session?.user ? (
+            <div className="flex items-center gap-2">
+              <span
+                style={{
+                  color: "#aaa8a0",
+                  fontSize: "0.8rem",
+                  fontFamily: "Georgia, serif",
+                }}
+              >
+                {session.user.name || session.user.email}
+              </span>
+              <button
+                onClick={() => signOut()}
+                className="scribe-btn-ghost"
+                style={{ padding: "0.25rem 0.6rem", fontSize: "0.75rem" }}
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className="scribe-btn-primary" style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem" }}>
+              Sign In
             </Link>
-          ))}
-        </nav>
+          )}
+        </div>
       </div>
     </header>
   );

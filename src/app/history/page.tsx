@@ -1,6 +1,7 @@
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { games, gameParticipants } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import HistoryClient from "./HistoryClient";
 
 export type GameRow = {
@@ -18,15 +19,24 @@ export type GameRow = {
   }[];
 };
 
-async function getGamesWithParticipants(): Promise<GameRow[]> {
-  const allGames = await db.select().from(games).orderBy(desc(games.playedAt));
+async function getGamesWithParticipants(userId: string): Promise<GameRow[]> {
+  const allGames = await db
+    .select()
+    .from(games)
+    .where(eq(games.userId, userId))
+    .orderBy(desc(games.playedAt));
 
   const result = await Promise.all(
     allGames.map(async (game) => {
       const participants = await db
         .select()
         .from(gameParticipants)
-        .where(eq(gameParticipants.gameId, game.id))
+        .where(
+          and(
+            eq(gameParticipants.gameId, game.id),
+            eq(gameParticipants.userId, userId)
+          )
+        )
         .orderBy(gameParticipants.rank);
 
       return { ...game, participants };
@@ -37,6 +47,7 @@ async function getGamesWithParticipants(): Promise<GameRow[]> {
 }
 
 export default async function HistoryPage() {
-  const gamesData = await getGamesWithParticipants();
+  const session = await auth();
+  const gamesData = await getGamesWithParticipants(session?.user?.id!);
   return <HistoryClient initialGames={gamesData} />;
 }

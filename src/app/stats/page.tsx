@@ -1,13 +1,24 @@
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { games, gameParticipants, players, WONDERS } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import StatsClient from "./StatsClient";
 import type { PlayerStats, WonderStats, WonderPlayerStats } from "@/db/schema";
 
-async function computeStats() {
-  const allPlayers = await db.select().from(players).orderBy(players.name);
-  const allGames = await db.select().from(games);
-  const allParticipants = await db.select().from(gameParticipants);
+async function computeStats(userId: string) {
+  const allPlayers = await db
+    .select()
+    .from(players)
+    .where(eq(players.userId, userId))
+    .orderBy(players.name);
+  const allParticipants = await db
+    .select()
+    .from(gameParticipants)
+    .where(eq(gameParticipants.userId, userId));
+  const allGames = await db
+    .select()
+    .from(games)
+    .where(eq(games.userId, userId));
 
   // Player stats
   const playerStats: PlayerStats[] = allPlayers.map((player) => {
@@ -56,6 +67,7 @@ async function computeStats() {
 }
 
 export default async function StatsPage() {
-  const data = await computeStats();
+  const session = await auth();
+  const data = await computeStats(session?.user?.id!);
   return <StatsClient {...data} />;
 }

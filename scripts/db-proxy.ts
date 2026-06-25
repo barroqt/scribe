@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { readdirSync, readFileSync, existsSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -15,13 +15,6 @@ function applyMigrations() {
   const files = readdirSync(MIGRATIONS_DIR)
     .filter((f) => f.endsWith(".sql"))
     .sort();
-
-  const existing = new Set(
-    db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table'")
-      .all()
-      .map((r) => (r as { name: string }).name)
-  );
 
   for (const file of files) {
     const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf-8");

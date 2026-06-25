@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // The 7 Wonders wonders list
 export const WONDERS = [
@@ -13,16 +13,44 @@ export const WONDERS = [
 
 export type Wonder = (typeof WONDERS)[number];
 
-export const players = sqliteTable("players", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull().unique(),
-  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
-    () => new Date()
-  ),
-});
+export const users = sqliteTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    name: text("name"),
+    email: text("email").notNull().unique(),
+    password: text("password").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
+      () => new Date()
+    ),
+  }
+);
+
+export const players = sqliteTable(
+  "players",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
+      () => new Date()
+    ),
+  },
+  (table) => ({
+    userNameUnique: uniqueIndex("players_user_name_unique").on(
+      table.userId,
+      table.name
+    ),
+  })
+);
 
 export const games = sqliteTable("games", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   playedAt: integer("played_at", { mode: "timestamp" }).$defaultFn(
     () => new Date()
   ),
@@ -33,18 +61,23 @@ export const games = sqliteTable("games", {
 
 export const gameParticipants = sqliteTable("game_participants", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   gameId: integer("game_id")
     .notNull()
     .references(() => games.id, { onDelete: "cascade" }),
   playerId: integer("player_id").references(() => players.id, {
     onDelete: "set null",
   }),
-  playerName: text("player_name").notNull(), // denormalized name snapshot
+  playerName: text("player_name").notNull(),
   wonder: text("wonder").notNull(),
   score: integer("score").notNull(),
-  rank: integer("rank").notNull(), // 1 = winner
+  rank: integer("rank").notNull(),
 });
 
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
 export type Game = typeof games.$inferSelect;

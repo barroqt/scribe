@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { games, gameParticipants, players, WONDERS } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 export async function GET() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const allGames = await db
       .select()
       .from(games)
+      .where(eq(games.userId, userId))
       .orderBy(desc(games.playedAt));
 
     const result = await Promise.all(
@@ -15,7 +23,12 @@ export async function GET() {
         const participants = await db
           .select()
           .from(gameParticipants)
-          .where(eq(gameParticipants.gameId, game.id))
+          .where(
+            and(
+              eq(gameParticipants.gameId, game.id),
+              eq(gameParticipants.userId, userId)
+            )
+          )
           .orderBy(gameParticipants.rank);
 
         return { ...game, participants };
@@ -30,6 +43,12 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { participants, playedAt } = body as {
@@ -79,10 +98,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify all players exist and fetch their names
+    // Verify all players exist (scoped to user) and fetch their names
     const playerRecords = await Promise.all(
       playerIds.map((id) =>
-        db.select().from(players).where(eq(players.id, id))
+        db
+          .select()
+          .from(players)
+          .where(and(eq(players.id, id), eq(players.userId, userId)))
       )
     );
     for (let i = 0; i < playerRecords.length; i++) {
@@ -114,13 +136,14 @@ export async function POST(request: NextRequest) {
     const gameDate = playedAt ? new Date(playedAt) : new Date();
     const [newGame] = await db
       .insert(games)
-      .values({ playedAt: gameDate })
+      .values({ playedAt: gameDate, userId })
       .returning();
 
     // Insert participants with denormalized player name
     await db.insert(gameParticipants).values(
       participantsWithRank.map((p) => ({
         gameId: newGame.id,
+        userId,
         playerId: p.playerId,
         playerName: playerNameMap.get(p.playerId) ?? "Unknown",
         wonder: p.wonder,

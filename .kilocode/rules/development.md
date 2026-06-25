@@ -14,9 +14,14 @@
 | Command | Purpose |
 |---------|---------|
 | `bun install` | Install dependencies |
+| `bun dev` | Start dev server (need db:proxy first) |
 | `bun build` | Build production app |
 | `bun lint` | Check code quality |
 | `bun typecheck` | Type checking |
+| `bun run db:proxy` | Start local SQLite proxy (port 3001) |
+| `bun run db:generate` | Generate new migration from schema |
+| `bun run db:migrate` | Run pending migrations |
+| `bun run db:push` | Push schema directly (dev only) |
 
 ## Best Practices
 
