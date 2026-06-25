@@ -59,3 +59,4 @@ Alexandria, Babylon, Ephesus, Gizah, Halikarnassos, Olympia, Rhodos (7 total)
 | Date | Changes |
 |------|---------|
 | 2026-04-16 | Built entire Scribe app from Next.js template |
+| 2026-06-25 | Added local dev DB proxy (scripts/db-proxy.ts), .env for local DB_URL/DB_TOKEN, db:proxy script |
