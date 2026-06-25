@@ -1,6 +1,6 @@
 # 7 Wonders Game Tracker
 
-Live: scribe-7wonders.vercel.app
+[Live version](scribe-7wonders.vercel.app) 
 
 ## Description
 
