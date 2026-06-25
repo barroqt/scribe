@@ -1,58 +1,42 @@
 # 7 Wonders Game Tracker
 
-## Description
+Track your 7 Wonders board game sessions, calculate player and wonder win rates, and settle debates about which wonder is truly OP.
 
-The 7 Wonders Game Tracker is a web application designed to record and analyze games of the board game "7 Wonders".
+## Features
 
-This tool allows players to input their game results, including player names, chosen civilizations, and final scores.
-It then provides a comprehensive history of all recorded games and generates statistics to give insights into player performance and civilization effectiveness.
+- **Player stats** — Win rate, average score, best score per player, broken down by wonder
+- **Wonder stats** — Which wonders win most often, average scores per wonder
+- **Game history** — Full record of every game with scores and rankings
+- **User accounts** — Each user gets their own isolated data (sign up, sign in)
 
-## Why?
+## Tech Stack
 
-After countless games of 7 wonders with my friends, we wanted to answer questions like:
+Next.js 16, React 19, TypeScript, Tailwind CSS 4, Drizzle ORM, SQLite (via libsql), NextAuth v5
 
-- What is my winrate with that wonder?
-- Is it me or I keep loosing with Babylon?
-- Is Rhodos OP?
-
-So now whenever we finish a game I input the results (or write them down and input later) in order to let the data speak for itself.
-We have discovered many things about our playstyles since then.
-
-I hope this can help other 7 wonders players keep track of their games and get some juicy hindsights.
-
-## Installation
-
-### Prerequisites
-
-- Node.js (v14 or later recommended)
-- pnpm (v6 or later)
-
-If you don't have Node.js installed, download and install it from [nodejs.org](https://nodejs.org/).
-
-If you don't have pnpm installed, you can install it globally using npm:
+## Local Development
 
 ```bash
-npm install -g pnpm
-```
+# Install dependencies
+bun install
 
-### Setup
-
-1. Clone this repository
-2. Install dependencies with `pnpm install`
-3. Copy the `.env.example` file to `.env`:
-
-```bash
+# Set up env vars
 cp .env.example .env
+# Edit .env — AUTH_SECRET can be any random string for local dev
+
+# Create SQLite database and run migrations
+bun run db:migrate
+
+# Start the dev server
+bun dev
 ```
 
-4. Edit the `.env` file to set your player names:
+Open http://localhost:3000, create an account, and start tracking.
 
-```text
-PLAYER1=YourPlayer1Name
-PLAYER2=YourPlayer2Name
-PLAYER3=YourPlayer3Name
-# Add more players as needed, up to 7
-```
+## Deployment
 
-5. Start the application with `pnpm start`
-6. Open your web browser and navigate to `http://localhost:3000`
+This app uses Turso (managed SQLite) for the database in production. See instructions to deploy to Vercel + Turso:
+
+1. `turso db create <name>`
+2. Save URL and token to Vercel environment variables (`AUTH_SECRET`, `DB_URL`, `DB_TOKEN`)
+3. Run `bun run db:migrate` against Turso
+4. Deploy to Vercel from your Git repo
